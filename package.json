@@ -5,6 +5,7 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
+    "start-fixed": "node fixed-server.js",
     "start-simple": "node simple-server.js",
     "start-debug": "node debug-server.js",
     "start-minimal": "node minimal-server.js",
