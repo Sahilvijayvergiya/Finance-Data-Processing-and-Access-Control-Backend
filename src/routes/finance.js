@@ -318,14 +318,14 @@ router.post('/', authenticateToken, requirePermission('write_records'), validate
         db.run(
           'INSERT INTO financial_records (user_id, category_id, amount, type, date, description) VALUES (?, ?, ?, ?, ?, ?)',
           [req.user.userId, category_id, amount, type, date, description],
-          function(err) {
+          function(err, result) {
             if (err) {
               return res.status(500).json({ error: 'Database error' });
             }
-
+            
             res.status(201).json({
               message: 'Financial record created successfully',
-              id: this.lastID
+              id: result.lastID
             });
           }
         );
