@@ -83,6 +83,7 @@ async function startServer() {
   }
 }
 
+// Start server
 startServer();
 
 module.exports = app;
