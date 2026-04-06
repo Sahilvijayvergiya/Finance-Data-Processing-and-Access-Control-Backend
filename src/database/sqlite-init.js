@@ -120,10 +120,50 @@ async function insertDefaultData() {
           }
           rolesCompleted++;
           if (rolesCompleted === roles.length) {
-            insertDefaultCategories().then(resolve).catch(reject);
+            insertDefaultUsers().then(resolve).catch(reject);
           }
         }
       );
+    });
+  });
+}
+
+async function insertDefaultUsers() {
+  return new Promise((resolve, reject) => {
+    const bcrypt = require('bcryptjs');
+    const db = getDatabase();
+    
+    // Default users with hashed passwords
+    const users = [
+      { username: 'admin', password: 'admin123', email: 'admin@example.com', role_name: 'admin' },
+      { username: 'analyst', password: 'analyst123', email: 'analyst@example.com', role_name: 'analyst' },
+      { username: 'viewer', password: 'viewer123', email: 'viewer@example.com', role_name: 'viewer' }
+    ];
+    
+    let usersCompleted = 0;
+    users.forEach(async (user) => {
+      try {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        
+        db.run(
+          'INSERT OR IGNORE INTO users (username, email, password_hash, role_id, status) VALUES (?, ?, ?, (SELECT id FROM roles WHERE name = ?), ?)',
+          [user.username, user.email, hashedPassword, user.role_name, 'active'],
+          (err) => {
+            if (err) {
+              console.error('Error inserting user:', err.message);
+              reject(err);
+              return;
+            }
+            usersCompleted++;
+            if (usersCompleted === users.length) {
+              insertDefaultCategories().then(resolve).catch(reject);
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Error hashing password:', error);
+        reject(error);
+      }
     });
   });
 }
@@ -158,6 +198,40 @@ async function insertDefaultCategories() {
           }
           completed++;
           if (completed === categories.length) {
+            insertSampleRecords().then(resolve).catch(reject);
+          }
+        }
+      );
+    });
+  });
+}
+
+async function insertSampleRecords() {
+  return new Promise((resolve, reject) => {
+    const db = getDatabase();
+    
+    // Sample financial records
+    const records = [
+      { description: 'Monthly Salary', amount: 5000, type: 'income', category_name: 'Salary', username: 'admin' },
+      { description: 'Freelance Project', amount: 1200, type: 'income', category_name: 'Freelance', username: 'admin' },
+      { description: 'Groceries', amount: 300, type: 'expense', category_name: 'Food', username: 'analyst' },
+      { description: 'Gas', amount: 150, type: 'expense', category_name: 'Transport', username: 'analyst' },
+      { description: 'Utilities', amount: 200, type: 'expense', category_name: 'Utilities', username: 'viewer' }
+    ];
+    
+    let completed = 0;
+    records.forEach(record => {
+      db.run(
+        'INSERT OR IGNORE INTO financial_records (description, amount, type, category_id, user_id, date) VALUES (?, ?, ?, (SELECT id FROM categories WHERE name = ?), (SELECT id FROM users WHERE username = ?), date("now"))',
+        [record.description, record.amount, record.type, record.category_name, record.username],
+        (err) => {
+          if (err) {
+            console.error('Error inserting record:', err.message);
+            reject(err);
+            return;
+          }
+          completed++;
+          if (completed === records.length) {
             console.log('SQLite database initialized successfully');
             resolve();
           }
